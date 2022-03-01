@@ -1,0 +1,14 @@
+工具基本使用步骤：
+用于判断pcap中波峰长度的基本使用步骤：
+1 将client发给server的数据包放在单独的pcap文件中(192.168.79.[1,10]分别为同一server机器上的两个server进程)
+    tcpdump -r monitor.pcap '((dst host 192.168.79.1) or (dst host 192.168.79.10))' -w client.pcap
+
+2 将该pcap按秒拆成多个pcap文件，拆开后的格式为1s.pcap, 2s.pcap,以此类推
+    ./split_pcap_bytime client.pcap
+
+3 从拆开的pcap文件中计算波峰间隔
+    ./burst_width 2s.pcap
+
+
+
+
