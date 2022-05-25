@@ -41,7 +41,8 @@ unsigned long max = BUFSIZE;
 int InitQueue(void)
 {
     int i;
-    PrQue = (pr_que_t*)calloc(MAX_QUE_NUM, sizeof(pr_que_t));
+	QUESIZE = BUFSIZE / conf->rx_que;
+    PrQue = (pr_que_t*)calloc(conf->rx_que, sizeof(pr_que_t));
     for(i = 0; i < MAX_QUE_NUM; i++){
         PrQue[i] = (pr_que_t)calloc(1, sizeof(struct pr_queue));
         PrQue[i]->deque = 0;

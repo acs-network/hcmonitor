@@ -8,6 +8,11 @@ struct mconfig* initConfig()
 {
   conf = (struct mconfig *)malloc(sizeof(struct mconfig));
   memset(conf, 0, sizeof(struct mconfig));
+  conf->rx_que         = 1;
+  conf->pr_que         = 1;
+  conf->interval       = 60;
+  conf->buffer_len     = 10000000;
+  conf->pr_que         = 1;
   conf->enable_http    = 1;
   conf->label_offset   = 6;
   conf->pri_offset     = 5;
@@ -41,6 +46,11 @@ int getConfig(struct mconfig *conf)
     config_lookup_int(&cfg, "enablePri", &(conf->enable_pri));
     config_lookup_int(&cfg, "enablePython", &(conf->enable_python));
     config_lookup_int(&cfg, "enableSQL", &(conf->enable_sql));
+    
+	config_lookup_int(&cfg, "rx_queues", &(conf->rx_que));
+	config_lookup_int(&cfg, "pr_queues", &(conf->pr_que));
+	config_lookup_int(&cfg, "interval", &(conf->interval));
+	config_lookup_int(&cfg, "buffer_pkt", &(conf->buffer_len));
 
     req_label = config_lookup(&cfg, "request_label");
     resp_label = config_lookup(&cfg, "response_label");

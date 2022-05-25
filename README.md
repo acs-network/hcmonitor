@@ -78,13 +78,14 @@ configure the switch port (H) connected to HCMonitor to mirror the inbound and o
 Configure the file setting.cfg according to own needs, for example (Monitor higher than 10000000 connections) :
 ```bash
 $ vim setting.cfg
+	rx_queues      = 4      //packets rx_burst queues(cores)
+    	pr_queues      = 4      //packets process queues(cores)
+    	interval       = 60     //latency CDF calculate period(s) for output in cdf.txt
+    	buffer_pkt     = 80000000 //length of the packets buffer copied from rte_mbuf
 	enableHTTP = 1      //Test the normal HTTP traffic
 	label_offset   = 6    // label location offset in payload bytes(count from 0)
 	request_label  = [0,2]  //request label for judging if a packet is a request
 	response_label = [1,3]  //response label for judging if a packet is a response
-$ vim rx_queue.h
-	#define MAX_QUE_NUM 4 //define queue numbers of receiving packets
-	#define PR_NUM 4	  //define queue numbers of process packets
 $ make
 ```
 For start parameter description, please execute

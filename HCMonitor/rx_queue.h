@@ -3,11 +3,14 @@
 
 #include <sys/time.h>
 
+#include "config.h"
+
 #define BUFSIZE 80000000
 #define REBUFF  200000
-#define MAX_QUE_NUM 4
-#define PR_NUM 4
-#define QUESIZE (BUFSIZE / MAX_QUE_NUM)
+#define MAX_QUE_NUM 6
+#define PR_NUM 6
+//#define QUESIZE (BUFSIZE / MAX_QUE_NUM)
+uint32_t QUESIZE;
 
 struct burst_tuple {
         uint32_t ip_src;

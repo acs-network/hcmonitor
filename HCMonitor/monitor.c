@@ -44,7 +44,7 @@
 /*#define PH_BUFF 10000000
 #define PL_BUFF 10000000*/
 unsigned long thre = 0;
-unsigned long max_size = QUESIZE;
+unsigned long max_size;
 unsigned long ph_size;
 unsigned long pl_size;
 
@@ -356,7 +356,7 @@ void cdf_acktime(struct atime *ack_time_pro,unsigned int idx)
 	req_recount = 0;
 	rsp_recount = 0;
 
-    goodput = (unsigned int)(conn * 0.05 * gpct) / INTERVAL;
+    goodput = (unsigned int)(conn * 0.05 * gpct) / conf->interval;
 	
 	if(conf->enable_pri){
 
@@ -472,15 +472,14 @@ void lcore_online(void)
 	
 	while(1){
 		//wait for several sec
-		sleep(INTERVAL);
+		sleep(conf->interval);
 	
 		printf("hy_connections:%d\n",conn_active_hy);
-
 		conn = conn_active_hy;
-		conn_active_mid = conn_active_hy / INTERVAL * 60;
+		conn_active_mid = conn_active_hy * 60 / conf->interval;
 		conn_active_hy = 0;
 		traffic_mid = traffic;
-        traffic = 0;
+        	traffic = 0;
 
 		min_count++;
 	
@@ -705,6 +704,7 @@ int res_setup_hash(uint16_t socket_id)
     char s[64];
     int i;
     /* create ipv4 hash */
+	max_size = QUESIZE;
     if(conf->enable_http){
         ipv4_req_hash_params.key_len = sizeof(struct http_tuple);
     }else{

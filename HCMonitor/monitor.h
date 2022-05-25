@@ -26,7 +26,7 @@
 //#define PRI_DEBUG
 
 //#define OP_MYSQL
-#define INTERVAL 60
+//#define INTERVAL 60
 #define TLT      26
 #define SASP     260
 int interval_cnt[SASP];
@@ -84,7 +84,7 @@ pp_que_t *PP_Ring;
 
 #endif
 
-#define SSD_NUM 80000000
+//#define SSD_NUM 80000000
 
 
 #if 0

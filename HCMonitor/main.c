@@ -30,17 +30,6 @@
  *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * HCMonitor source code is developed based on the DPDK Kit.
- * 
- * HCMonitor is a monitor system for high concurrent network services which is developed on user-level and 
- * estimates response latency from requests input to responses output, called server-side latency.
- *
- * Based on monitor.c code.
- *
- * Author: Hui Song
- *  
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,14 +92,21 @@ char rlog[20] = "response.txt";
 #define MAX_FREE 16
 #define BURST_TX_DRAIN_US 100 /* TX drain every ~100us */
 
-#define RX_LCORE 0
+/*#define RX_LCORE 0
 #define PCAP_LCORE (RX_LCORE+MAX_QUE_NUM)
 #define MONITOR_LCORE (PCAP_LCORE+PR_NUM)
 #define TIMER_LCORE (MONITOR_LCORE+1)
 #define CDF_LCORE (TIMER_LCORE+1)
 #define TSTAMP_LCORE (CDF_LCORE+1)
-#define SSD_LCORE (TSTAMP_LCORE+1)
+#define SSD_LCORE (TSTAMP_LCORE+1)*/
 
+int RX_LCORE; 
+int PCAP_LCORE; 
+int MONITOR_LCORE; 
+int TIMER_LCORE; 
+int CDF_LCORE;
+int TSTAMP_LCORE; 
+int SSD_LCORE; 
 
 /*
  * Configurable number of RX/TX ring descriptors
@@ -214,8 +210,8 @@ static const struct rte_eth_conf port_conf = {
     .rx_adv_conf = {
         .rss_conf = {
             .rss_key = NULL,
-			//.rss_hf = ETH_RSS_I40E,
-            .rss_hf = ETH_RSS_E1000_IGB,
+			.rss_hf = ETH_RSS_I40E,
+            //.rss_hf = ETH_RSS_E1000_IGB,
         },
     },
     .txmode = {
@@ -284,7 +280,7 @@ print_stats(void)
 		
 		rte_eth_stats_get(portid, &eth_stats);
 
-		for(i = 0; i < MAX_QUE_NUM; i++){
+		for(i = 0; i < conf->rx_que; i++){
 			total_que_rx += queue_states[i];
 			total_pkt_free += pkt_free[i];
 		}
@@ -512,12 +508,13 @@ l2fwd_main_loop(void)
 	
 	qconf = &lcore_queue_conf[lcore_id];
 
-	if(lcore_id >= MAX_QUE_NUM && lcore_id < MONITOR_LCORE){
-	    int ret;
+	if(lcore_id >= conf->rx_que && lcore_id < MONITOR_LCORE){
+	    int ret, dive;
 		int idx, pos, end;
 		idx = lcore_id - PCAP_LCORE;
-		pos = idx * (MAX_QUE_NUM / PR_NUM);
-		end = (idx + 1) * (MAX_QUE_NUM / PR_NUM);
+		dive = conf->rx_que / conf->pr_que;
+		pos = idx * dive;
+		end = (idx + 1) * dive;
 	    while(1){
         	for(i = pos; i < end; i++){
 				if((SSD_Ring[i]) && (SSD_Ring[i]->occupy != SSD_Ring[i]->deque)){
@@ -550,7 +547,7 @@ l2fwd_main_loop(void)
 						}
 					}
 #endif
-                	SSD_Ring[i]->deque = (SSD_Ring[i]->deque + 1) % SSD_NUM;
+                	SSD_Ring[i]->deque = (SSD_Ring[i]->deque + 1) % conf->buffer_len;
             	}
 
 			}
@@ -562,12 +559,12 @@ l2fwd_main_loop(void)
 	    int ret;
         pcap_header ph;
         while(1){
-        	for(i = 0; i < MAX_QUE_NUM; i++){
+        	for(i = 0; i < conf->rx_que; i++){
 		    	if(PP_Ring[i]->occupy != PP_Ring[i]->deque){
 			    	pcap_t p = PP_Ring[i]->ring[PP_Ring[i]->deque];
 		    	    ret = fwrite(&p->ph, sizeof(pcap_header), 1, fp_out);
 			    	ret = fwrite(p->buff, 1, p->ph.capture_len, fp_out);	
-                    PP_Ring[i]->deque = (PP_Ring[i]->deque + 1) % SSD_NUM;
+                    PP_Ring[i]->deque = (PP_Ring[i]->deque + 1) % conf->buffer_len;
                 }
 
 			}
@@ -585,7 +582,7 @@ l2fwd_main_loop(void)
                 rte_delay_us(1);
                 time = 0;
             }
-            for(i = 0; i < MAX_QUE_NUM; i++){
+            for(i = 0; i < conf->rx_que; i++){
 			    if(PrQue[i]->occupy != PrQue[i]->deque){	
                 	node_t q = PrQue[i]->RxQue + PrQue[i]->deque;
 		    		label = response_time_process(q, pkt_num, 0);
@@ -617,7 +614,7 @@ l2fwd_main_loop(void)
 					/* if timer has reached its timeout */
 					if (likely(timer_sta >= (uint64_t) timer_stper)) {
 							print_stats();
-							for(q = 0;q < MAX_QUE_NUM; q++){
+							for(q = 0;q < conf->rx_que; q++){
 								printf("queue %d rx %d pkts.\n",q, queue_states[q]);
 							    printf("\noccupy:%ld,deque:%ld,pkt_req:%d,pkt_rep:%d\n",
                                     PrQue[q]->occupy,PrQue[q]->deque,pkt_req - prev_req, pkt_rep - prev_rep);
@@ -693,9 +690,9 @@ l2fwd_main_loop(void)
 	
 	SSD_Ring[lcore_id] = (ssd_t)calloc(1, sizeof(struct ssd_queue));
     SSD_Ring[lcore_id]->deque = SSD_Ring[lcore_id]->occupy = 0;
-    SSD_Ring[lcore_id]->ring = (struct tik_mbuf*)calloc(SSD_NUM, sizeof(struct tik_mbuf));
-    struct rte_mbuf* tmp = (struct rte_mbuf*)calloc(SSD_NUM, sizeof(struct rte_mbuf));
-	for(j = 0; j < SSD_NUM; j++){
+    SSD_Ring[lcore_id]->ring = (struct tik_mbuf*)calloc(conf->buffer_len, sizeof(struct tik_mbuf));
+    struct rte_mbuf* tmp = (struct rte_mbuf*)calloc(conf->buffer_len, sizeof(struct rte_mbuf));
+	for(j = 0; j < conf->buffer_len; j++){
 //#ifdef PMD_MODE
          SSD_Ring[lcore_id]->ring[j].m = tmp + j;
     }
@@ -724,14 +721,14 @@ l2fwd_main_loop(void)
 			for (j = 0; j < nb_rx; j++) {
 				m = pkts_burst[j];
 				rte_prefetch0(rte_pktmbuf_mtod(m, void *));
-				if(m->pkt_len > 100){
-					if(likely((SSD_Ring[lcore_id]->occupy + 1) % SSD_NUM != SSD_Ring[lcore_id]->deque)){
+				if(m->pkt_len > 70){
+					if(likely((SSD_Ring[lcore_id]->occupy + 1) % conf->buffer_len != SSD_Ring[lcore_id]->deque)){
 						ssd = SSD_Ring[lcore_id]->ring + SSD_Ring[lcore_id]->occupy;
 						memcpy(ssd->m, m, sizeof(struct rte_mbuf));
 						ssd->now.tv_sec = ts.tv_sec;
 						ssd->now.tv_nsec = ts.tv_nsec;
 						_mm_sfence();
-						SSD_Ring[lcore_id]->occupy = (SSD_Ring[lcore_id]->occupy + 1) % SSD_NUM;
+						SSD_Ring[lcore_id]->occupy = (SSD_Ring[lcore_id]->occupy + 1) % conf->buffer_len;
 					}else{
 						printf("EXCP:SSD buffer is Full!\n");
 					}
@@ -950,8 +947,12 @@ main(int argc, char **argv)
 	uint8_t portid, last_port;
 	unsigned lcore_id, rx_lcore_id, socket_id;
 	unsigned nb_ports_in_mask = 0;
-	const uint16_t rx_queue = MAX_QUE_NUM;
 	char s[64];
+	
+	conf = initConfig();
+    getConfig(conf);
+
+	const uint16_t rx_queue = conf->rx_que;
 
 	/* init EAL */
 	ret = rte_eal_init(argc, argv);
@@ -1128,11 +1129,8 @@ main(int argc, char **argv)
 
 		/* initialize Rx Packet Key Queue */
 #ifdef MIRROR
-		conf = initConfig();
-		//sample_rate = (int*)malloc(sizeof(int));
-        getConfig(conf);
-		res_setup_hash(0);
 		InitQueue();
+		res_setup_hash(0);
 		Qcur = KeyQue;
 #endif
 
@@ -1143,8 +1141,15 @@ main(int argc, char **argv)
 //#else
 //		SSD_Ring[i]->ring[j]->iph = (struct rte_ipv4_hdr*)calloc(1, sizeof(struct rte_ipv4_hdr));
 //#endif
+	RX_LCORE = 0; 
+	PCAP_LCORE = RX_LCORE + conf->rx_que; 
+	MONITOR_LCORE = PCAP_LCORE + conf->pr_que; 
+	TIMER_LCORE = MONITOR_LCORE + 1; 
+	CDF_LCORE = TIMER_LCORE + 1;
+	TSTAMP_LCORE = CDF_LCORE + 1; 
+	SSD_LCORE = TSTAMP_LCORE + 1; 
 	
-	SSD_Ring = (ssd_t*)calloc(MAX_QUE_NUM, sizeof(ssd_t));
+	SSD_Ring = (ssd_t*)calloc(conf->rx_que, sizeof(ssd_t));
 
 
 #ifdef PMD_MODE
@@ -1155,12 +1160,12 @@ main(int argc, char **argv)
     ret = fwrite(&pfh, sizeof(pcap_file_header), 1, fp_out);
     //fclose(fp_out);
     PP_Ring = (pp_que_t*)calloc(1, sizeof(pp_que_t));
-    for(i = 0; i < MAX_QUE_NUM; i++){
+    for(i = 0; i < conf->rx_que; i++){
         PP_Ring[i] = (pp_que_t)calloc(1, sizeof(struct pcap_queue));
         PP_Ring[i]->deque = PP_Ring[i]->occupy = 0;
-        PP_Ring[i]->ring = (pcap_t*)calloc(SSD_NUM, sizeof(pcap_t));
-        pcap_t tmp = (pcap_t)calloc(SSD_NUM, sizeof(struct to_pcap));
-	for(j = 0; j < SSD_NUM; j++){
+        PP_Ring[i]->ring = (pcap_t*)calloc(conf->buffer_len, sizeof(pcap_t));
+        pcap_t tmp = (pcap_t)calloc(conf->buffer_len, sizeof(struct to_pcap));
+	for(j = 0; j < conf->buffer_len; j++){
             PP_Ring[i]->ring[j] = tmp[j];
 	}
     }

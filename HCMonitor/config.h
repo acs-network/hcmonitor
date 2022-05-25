@@ -35,6 +35,12 @@ struct mconfig
 
     int  server_port;    //server node port, used for judge https packet direction
     int  pkt_len;        //payload length, used for judge https packet priority
+    
+	/*packets receive cores and process cores*/
+	int rx_que;          //packets receive queues(cores) num
+	int pr_que;          //packets process queues(cores) num
+	int interval;        //cdf calculate period(s)
+	int buffer_len;      //buffered packets num in pr_queues
 
     /*parse request/response packet in IOT network*/
     int req_label[MAXLABEL];  //labels for request judge
