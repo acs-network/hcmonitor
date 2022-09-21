@@ -90,9 +90,12 @@ $ make
 ```
 For start parameter description, please execute
 ```bash
-$ build/monitor -h 
+$ build/monitor -h
+-c COREMASK: Hexadecimal bitmask of cores to run on
+-p PORTMASK: A hexadecimal bitmask of the ports to configure 
+-n CHANNELS: Number of memory channels
 ```
-Start Examples(12 cores, 1 NIC port)
+Start Examples(-c fff for 12 cores, -p1 for 1 NIC port)
 ```bash
 $ ./build/monitor -c fff -n3 -- -p1
 ```
