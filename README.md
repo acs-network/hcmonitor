@@ -75,6 +75,17 @@ configure the switch port (H) connected to HCMonitor to mirror the inbound and o
 
 ![HCMonitor_Test_Method](HCMonitor_test.png)
 
+TestBed：
+CPU：Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+
+Mem：128GB
+
+OS：CentOS Linux release 7.4.1708
+
+Kernel：3.10.0-957.el7.x86_64
+
+NIC：82599 10 Gigabit Dual Port Network Connection 10fb
+
 Configure the file setting.cfg according to own needs, for example (Monitor higher than 10000000 connections) :
 ```bash
 $ vim setting.cfg
