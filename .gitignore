@@ -7,7 +7,7 @@ HCMonitor/burst.txt
 HCMonitor/response*
 HCMonitor/err*
 HCMonitor/out*
-HCMonitor/monitor.pcap
+HCMonitor/*.pcap
 HCMonitor/lp.txt
 HCMonitor/retrans.txt
 HCMonitor/*.txt

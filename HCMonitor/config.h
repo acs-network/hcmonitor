@@ -50,10 +50,11 @@ struct mconfig
 
     /*indicate request priority in IOT network*/
     int enable_pri;
-	float pri_high_rate;
+    int rsp_pri;
     int pri_offset;
     int pri_high_label;
     int pri_low_label;
+	float pri_high_rate;
 
     int enable_python;  //enable python print cdf
     int enable_sql;     //enable sql connected

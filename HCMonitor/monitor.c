@@ -562,14 +562,16 @@ int response_time_process(struct node_data *data,uint16_t nb_rx,uint16_t socket_
 #endif
 		}
 		
-        //traffic += data->total_len + 14; 
-        if(data->pri == conf->pri_high_label){
-	    	recv_pri_high++;				                 
-	    	req_hy_count[ret_req].pri = 1;
-        }else{
-            recv_pri_low++;
-	    	req_hy_count[ret_req].pri = 0;
-		}
+        //traffic += data->total_len + 14;
+	if(!conf->rsp_pri){
+        	if(data->pri == conf->pri_high_label){
+	    		recv_pri_high++;				                 
+	    		req_hy_count[ret_req].pri = 1;
+        	}else{
+            		recv_pri_low++;
+	    		req_hy_count[ret_req].pri = 0;
+			}
+	}
 
 
     	return 1;
@@ -640,6 +642,15 @@ int response_time_process(struct node_data *data,uint16_t nb_rx,uint16_t socket_
 				req_hy_count[ret].idx,req_stamp,resp_stamp,ack);			
 			    fclose(fp_art);
 #endif
+				if(conf->rsp_pri){
+        			if(data->pri == conf->pri_high_label){
+	    				recv_pri_high++;				                 
+	    				req_hy_count[ret].pri = 1;
+        			}else{
+            			recv_pri_low++;
+	    				req_hy_count[ret].pri = 0;
+					}
+				}	
 				if (data->sent_seq > Maxseq[ret].rsp_sent_seq){
 					Maxseq[ret].rsp_sent_seq = data->sent_seq;
 			    	if(req_hy_count[ret].pri){
@@ -846,6 +857,8 @@ int key_extract(struct rte_ipv4_hdr *ip_hdr,struct node_data *data,struct timesp
         data->key.port_src = rte_be_to_cpu_16(tcp->dst_port);
 
         data->type = M_RSP;//req_bit[POFFSET];
+		
+		data->pri = req_bit[conf->pri_offset];
 
         data->total_len = payload_len;//rte_be_to_cpu_16(ip_hdr->total_length);
 

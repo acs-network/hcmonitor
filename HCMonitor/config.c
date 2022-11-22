@@ -21,6 +21,7 @@ struct mconfig* initConfig()
   conf->pri_high_rate  = 0.05;
   conf->server_port    = 80;
   conf->enable_pri     = 1;
+  conf->rsp_pri        = 0;
   return conf;
 }
 
@@ -47,6 +48,7 @@ int getConfig(struct mconfig *conf)
     config_lookup_int(&cfg, "enablePython", &(conf->enable_python));
     config_lookup_int(&cfg, "enableSQL", &(conf->enable_sql));
     
+    config_lookup_int(&cfg, "rspPri", &(conf->rsp_pri));
 	config_lookup_int(&cfg, "rx_queues", &(conf->rx_que));
 	config_lookup_int(&cfg, "pr_queues", &(conf->pr_que));
 	config_lookup_int(&cfg, "interval", &(conf->interval));
