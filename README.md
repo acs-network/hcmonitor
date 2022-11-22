@@ -59,6 +59,9 @@ Only those devices will work with DPDK drivers that are listed on this page: htt
 #### Setup HCMonitor 
 
 #### Compile
+
+**Note: We Must apply non-root user privileges to compile HCMonitor, otherwise the comiling will be stopped.**
+
 ```bash
 $ cd <path to HCMonitor>
 $ vim Makefile
@@ -97,9 +100,6 @@ $ vim setting.cfg
 	label_offset   = 6      //label location offset in payload bytes(count from 0)
 	request_label  = [0,2]  //request label for judging if a packet is a request
 	response_label = [1,3]  //response label for judging if a packet is a response
-
-**Note: We Must apply non-root user privileges to compile HCMonitor, other
-wise the comiling will be stopped.**
 
 $ make
 ```
