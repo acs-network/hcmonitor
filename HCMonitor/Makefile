@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright(c) 2010-2014 Intel Corporation
-RTE_SDK=/home/songhui/HCMonitor/deps/dpdk-stable-19.11.4
+
+HOME=$(shell env | grep HOME | cut -d "=" -f 2)
+ifeq ($(HOME),/root)
+ $(error Do not compile as root)
+endif
+
+#RTE_SDK=/home/shenyifan/dpdk-stable-19.11.4
 RTE_TARGET=x86_64-native-linuxapp-gcc
 # binary name
 APP = monitor
