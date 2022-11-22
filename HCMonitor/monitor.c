@@ -883,20 +883,15 @@ int packet_process(struct rte_ipv4_hdr *ip_hdr, struct rte_tcp_hdr *tcp, struct 
 	node_t n;
 	int i;
 	i = lcore_id;
-	while(likely((PrQue[i]->occupy + 1) % max_size == PrQue[i]->deque))
-	{
-		i = (i + 1) % MAX_QUE_NUM;
-	}
-	/*if(likely((PrQue[lcore_id]->occupy + 1) % max_size != PrQue[lcore_id]->deque)){
-        n = PrQue[lcore_id]->RxQue + PrQue[lcore_id]->occupy;
+	if(likely((PrQue[i]->occupy + 1) % max_size != PrQue[i]->deque)){
+        n = PrQue[i]->RxQue + PrQue[i]->occupy;
 	}else{
-		printf("EXCP:Packet Process Queue %d is full!\n", lcore_id);
     	max_size = REBUFF + max_size;
-    	PrQue[lcore_id]->RxQue = (node_t)realloc(PrQue[lcore_id]->RxQue,
+    	PrQue[i]->RxQue = (node_t)realloc(PrQue[i]->RxQue,
                                 max_size * sizeof(struct node_data));
-    	n = PrQue[lcore_id]->RxQue + PrQue[lcore_id]->occupy;
-    }*/
-	n = PrQue[i]->RxQue + PrQue[i]->occupy;
+    	n = PrQue[i]->RxQue + PrQue[i]->occupy;
+		printf("EXCP:Packet Process Queue %d is full!\n", lcore_id);
+    }
 #if USE_HTTP
 	if(conf->enable_https)
 		la_key = https_parse(ip_hdr, tcp, n, ts_now, payload_len);
@@ -911,7 +906,7 @@ int packet_process(struct rte_ipv4_hdr *ip_hdr, struct rte_tcp_hdr *tcp, struct 
 #endif
 	if(likely(la_key > 0))
     {       
-		PrQue[lcore_id]->occupy = (PrQue[lcore_id]->occupy + 1) % max_size;
+		PrQue[i]->occupy = (PrQue[i]->occupy + 1) % max_size;
 		_mm_sfence();
         return 1;			
     }else{
