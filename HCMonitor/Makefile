@@ -3,10 +3,10 @@
 
 HOME=$(shell env | grep HOME | cut -d "=" -f 2)
 ifeq ($(HOME),/root)
- $(error Do not compile as root)
+ $(error Do not compile with root)
 endif
 
-#RTE_SDK=/home/shenyifan/dpdk-stable-19.11.4
+RTE_SDK=/home/shenyifan/dpdk-stable-19.11.4
 RTE_TARGET=x86_64-native-linuxapp-gcc
 # binary name
 APP = monitor

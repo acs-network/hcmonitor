@@ -616,8 +616,12 @@ l2fwd_main_loop(void)
 							print_stats();
 							for(q = 0;q < conf->rx_que; q++){
 								printf("queue %d rx %d pkts.\n",q, queue_states[q]);
-							    printf("\noccupy:%ld,deque:%ld,pkt_req:%d,pkt_rep:%d\n",
-                                    PrQue[q]->occupy,PrQue[q]->deque,pkt_req - prev_req, pkt_rep - prev_rep);
+								if(SSD_Ring[q]){
+							    	printf("\noccupy:%ld,deque:%ld,pkt_req:%d,pkt_rep:%d\n",
+                                    /*PrQue[q]->occupy,PrQue[q]->deque,pkt_req - prev_req, pkt_rep - prev_rep);*/
+
+                                    SSD_Ring[q]->occupy,SSD_Ring[q]->deque,pkt_req - prev_req, pkt_rep - prev_rep);
+								}
 							}
 							/* reset the timer */
 							timer_sta = 0;
